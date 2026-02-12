@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Shell_Acworth Time Clock</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #e94560;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+        }
+
+        /* Login Screen */
+        .login-screen, .main-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #e94560;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560 0%, #c73659 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Main Screen */
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome-message h2 {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .welcome-message .employee-name {
+            font-size: 1.8rem;
+            color: #e94560;
+            margin-top: 5px;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .status-indicator.checked-in {
+            background: rgba(76, 175, 80, 0.2);
+            border: 3px solid #4caf50;
+        }
+
+        .status-indicator.checked-out {
+            background: rgba(255, 152, 0, 0.2);
+            border: 3px solid #ff9800;
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-time {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn-checkin {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-checkin:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-checkout {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-checkout:hover {
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        /* Location Status */
+        .location-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .location-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .location-dot.valid {
+            background: #4caf50;
+        }
+
+        .location-dot.invalid {
+            background: #f44336;
+        }
+
+        .location-dot.loading {
+            background: #ff9800;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Weekly Summary */
+        .weekly-summary {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: auto;
+        }
+
+        .weekly-summary h3 {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            color: #e94560;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #81c784;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #e57373;
+        }
+
+        .message.info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196f3;
+            color: #64b5f6;
+        }
+
+        /* Logout Button */
+        .btn-logout {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            margin-top: 20px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        .btn-logout:hover {
+            border-color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Current Time */
+        .current-time {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .current-date {
+            text-align: center;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 25px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">⛽</div>
+            <div class="company-name">Shell_Acworth</div>
+            <div class="subtitle">Employee Time Clock</div>
+        </div>
+
+        <!-- Login Screen -->
+        <div class="login-screen" id="loginScreen">
+            <div class="input-group">
+                <label>Employee ID</label>
+                <input type="text" id="employeeId" placeholder="Enter your ID (e.g., E001)" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>PIN</label>
+                <input type="password" id="pin" placeholder="Enter your 4-digit PIN" maxlength="4" inputmode="numeric">
+            </div>
+            <div id="loginMessage"></div>
+            <button class="btn btn-primary" id="loginBtn" onclick="login()">
+                Sign In
+            </button>
+        </div>
+
+        <!-- Main Screen -->
+        <div class="main-screen hidden" id="mainScreen">
+            <!-- Current Time -->
+            <div class="current-time" id="currentTime">--:--:--</div>
+            <div class="current-date" id="currentDate">Loading...</div>
+
+            <!-- Welcome -->
+            <div class="welcome-message">
+                <h2>Welcome back,</h2>
+                <div class="employee-name" id="employeeName">Employee</div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="status-card">
+                <div class="status-indicator" id="statusIndicator">
+                    <span id="statusEmoji">⏳</span>
+                </div>
+                <div class="status-text" id="statusText">Checking status...</div>
+                <div class="status-time" id="statusTime"></div>
+            </div>
+
+            <!-- Location Status -->
+            <div class="location-status">
+                <div class="location-dot loading" id="locationDot"></div>
+                <span id="locationText">Checking location...</span>
+            </div>
+
+            <!-- Messages -->
+            <div id="mainMessage"></div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-checkin" id="checkinBtn" onclick="checkIn()" disabled>
+                    ✓ Check In
+                </button>
+                <button class="btn btn-checkout" id="checkoutBtn" onclick="checkOut()" disabled>
+                    ✗ Check Out
+                </button>
+            </div>
+
+            <!-- Weekly Summary -->
+            <div class="weekly-summary">
+                <h3>📊 This Week</h3>
+                <div id="weeklySummary">
+                    <div class="summary-row">
+                        <span>Loading...</span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logout -->
+            <button class="btn btn-logout" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
+        const API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+        
+        // Work location coordinates (21 Golf Crest Dr, Acworth, GA 30101)
+        const WORK_LOCATION = {
+            latitude: 34.0659,
+            longitude: -84.6769,
+            radius: 100 // meters
+        };
+
+        // ============ STATE ============
+        let currentEmployee = null;
+        let currentPosition = null;
+        let isLocationValid = false;
+        let isCheckedIn = false;
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for saved session
+            const saved = localStorage.getItem('employee');
+            if (saved) {
+                currentEmployee = JSON.parse(saved);
+                showMainScreen();
+            }
+
+            // Set up Enter key handlers
+            document.getElementById('pin').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        // ============ CLOCK ============
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            });
+            const date = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('currentTime').textContent = time;
+            document.getElementById('currentDate').textContent = date;
+        }
+
+        // ============ LOGIN ============
+        async function login() {
+            const employeeId = document.getElementById('employeeId').value.trim().toUpperCase();
+            const pin = document.getElementById('pin').value.trim();
+
+            if (!employeeId || !pin) {
+                showMessage('loginMessage', 'Please enter your Employee ID and PIN', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Signing in...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'verifyEmployee',
+                        employeeId: employeeId,
+                        pin: pin
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentEmployee = result.employee;
+                    localStorage.setItem('employee', JSON.stringify(currentEmployee));
+                    showMainScreen();
+                } else {
+                    showMessage('loginMessage', result.error || 'Invalid credentials', 'error');
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Connection error. Please try again.', 'error');
+                console.error(error);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = 'Sign In';
+        }
+
+        // ============ MAIN SCREEN ============
+        function showMainScreen() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            document.getElementById('employeeName').textContent = currentEmployee.name;
+            
+            // Start location tracking
+            startLocationTracking();
+            
+            // Get current status
+            getStatus();
+            
+            // Get weekly summary
+            getWeeklySummary();
+        }
+
+        function logout() {
+            localStorage.removeItem('employee');
+            currentEmployee = null;
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('employeeId').value = '';
+            document.getElementById('pin').value = '';
+            document.getElementById('loginMessage').innerHTML = '';
+        }
+
+        // ============ LOCATION ============
+        function startLocationTracking() {
+            if (!navigator.geolocation) {
+                updateLocationUI(false, 'Location not supported');
+                return;
+            }
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000
+            };
+
+            // Get initial position
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentPosition = position.coords;
+                    checkLocationValidity();
+                },
+                (error) => {
+                    console.error('Location error:', error);
+                    updateLocationUI(false, 'Location access denied');
+                },
+                options
+            );
+
+            // Watch position
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    currentPosition = position.coords;
+                    checkLocationValidity();
+                },
+                (error) => {
+                    console.error('Location watch error:', error);
+                },
+                options
+            );
+        }
+
+        function checkLocationValidity() {
+            if (!currentPosition) {
+                updateLocationUI(false, 'Getting location...');
+                return;
+            }
+
+            const distance = calculateDistance(
+                currentPosition.latitude,
+                currentPosition.longitude,
+                WORK_LOCATION.latitude,
+                WORK_LOCATION.longitude
+            );
+
+            isLocationValid = distance <= WORK_LOCATION.radius;
+            
+            if (isLocationValid) {
+                updateLocationUI(true, `At work location (${Math.round(distance)}m)`);
+            } else {
+                updateLocationUI(false, `${Math.round(distance)}m from work`);
+            }
+
+            updateButtons();
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Earth radius in meters
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function toRad(deg) {
+            return deg * (Math.PI / 180);
+        }
+
+        function updateLocationUI(valid, text) {
+            const dot = document.getElementById('locationDot');
+            const textEl = document.getElementById('locationText');
+            
+            dot.className = 'location-dot ' + (valid ? 'valid' : 'invalid');
+            textEl.textContent = text;
+        }
+
+        // ============ STATUS ============
+        async function getStatus() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getStatus',
+                        employeeId: currentEmployee.id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    isCheckedIn = result.isCheckedIn;
+                    updateStatusUI(result);
+                    updateButtons();
+                }
+            } catch (error) {
+                console.error('Status error:', error);
+            }
+        }
+
+        function updateStatusUI(status) {
+            const indicator = document.getElementById('statusIndicator');
+            const emoji = document.getElementById('statusEmoji');
+            const text = document.getElementById('statusText');
+            const time = document.getElementById('statusTime');
+
+            if (status.isCheckedIn) {
+                indicator.className = 'status-indicator checked-in';
+                emoji.textContent = '✓';
+                text.textContent = 'Currently Checked In';
+                if (status.lastTime) {
+                    const checkInTime = new Date(status.lastTime);
+                    time.textContent = 'Since ' + checkInTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            } else {
+                indicator.className = 'status-indicator checked-out';
+                emoji.textContent = '○';
+                text.textContent = 'Not Checked In';
+                if (status.lastTime) {
+                    const checkOutTime = new Date(status.lastTime);
+                    time.textContent = 'Last check-out: ' + checkOutTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } else {
+                    time.textContent = 'No recent activity';
+                }
+            }
+        }
+
+        function updateButtons() {
+            const checkinBtn = document.getElementById('checkinBtn');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            if (!isLocationValid) {
+                checkinBtn.disabled = true;
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            checkinBtn.disabled = isCheckedIn;
+            checkoutBtn.disabled = !isCheckedIn;
+        }
+
+        // ============ CHECK IN/OUT ============
+        async function checkIn() {
+            if (!currentPosition) {
+                showMessage('mainMessage', 'Unable to get your location. Please enable GPS.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('checkinBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Checking in...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'checkIn',
+                        employeeId: currentEmployee.id,
+                        employeeName: currentEmployee.name,
+                        latitude: currentPosition.latitude,
+                        longitude: currentPosition.longitude
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('mainMessage', '✓ ' + result.message, 'success');
+                    isCheckedIn = true;
+                    getStatus();
+                    getWeeklySummary();
+                } else {
+                    showMessage('mainMessage', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('mainMessage', 'Connection error. Please try again.', 'error');
+                console.error(error);
+            }
+
+            btn.innerHTML = '✓ Check In';
+            updateButtons();
+        }
+
+        async function checkOut() {
+            if (!currentPosition) {
+                showMessage('mainMessage', 'Unable to get your location. Please enable GPS.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('checkoutBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Checking out...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'checkOut',
+                        employeeId: currentEmployee.id,
+                        employeeName: currentEmployee.name,
+                        latitude: currentPosition.latitude,
+                        longitude: currentPosition.longitude
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('mainMessage', `✓ ${result.message} Hours worked: ${result.hoursWorked}`, 'success');
+                    isCheckedIn = false;
+                    getStatus();
+                    getWeeklySummary();
+                } else {
+                    showMessage('mainMessage', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('mainMessage', 'Connection error. Please try again.', 'error');
+                console.error(error);
+            }
+
+            btn.innerHTML = '✗ Check Out';
+            updateButtons();
+        }
+
+        // ============ WEEKLY SUMMARY ============
+        async function getWeeklySummary() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getWeeklyReport',
+                        employeeId: currentEmployee.id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateWeeklySummaryUI(result);
+                }
+            } catch (error) {
+                console.error('Weekly summary error:', error);
+            }
+        }
+
+        function updateWeeklySummaryUI(data) {
+            const container = document.getElementById('weeklySummary');
+            const rate = currentEmployee.rate || 15;
+            const pay = (parseFloat(data.totalHours) * rate).toFixed(2);
+
+            let html = '';
+            
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(session => {
+                    html += `
+                        <div class="summary-row">
+                            <span>${session.date}</span>
+                            <span>${session.hours} hrs</span>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `
+                    <div class="summary-row">
+                        <span>No shifts this week</span>
+                        <span></span>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="summary-row">
+                    <span>Total: ${data.totalHours} hours</span>
+                    <span>$${pay}</span>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ============ UTILITIES ============
+        function showMessage(containerId, text, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="message ${type}">${text}</div>`;
+            
+            // Auto-clear after 5 seconds
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
